@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mobile Object Detection</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+        font-family: Arial, sans-serif;
+      }
+      .button {
+        width: 100%;
+        padding: 15px;
+        margin: 10px 0;
+        border: none;
+        border-radius: 5px;
+        background-color: #4caf50;
+        color: white;
+        font-size: 16px;
+      }
+      .button:disabled {
+        background-color: #cccccc;
+      }
+      #imagePreview {
+        width: 100%;
+        max-width: 600px;
+        margin: 20px auto;
+        display: none;
+      }
+      #fileInput {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Mobile Object Detection</h1>
+
+    <input type="file" id="fileInput" accept="image/*" />
+    <button
+      class="button"
+      onclick="document.getElementById('fileInput').click()"
+    >
+      Load Image
+    </button>
+    <button class="button" id="predictBtn" onclick="predict()" disabled>
+      Predict
+    </button>
+    <button class="button" onclick="reset()">Reset</button>
+
+    <img id="imagePreview" src="" alt="Preview" />
+
+    <script>
+      const fileInput = document.getElementById("fileInput");
+      const imagePreview = document.getElementById("imagePreview");
+      const predictBtn = document.getElementById("predictBtn");
+
+      fileInput.addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            imagePreview.src = e.target.result;
+            imagePreview.style.display = "block";
+            predictBtn.disabled = false;
+            uploadImage(file, "upload");
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      function uploadImage(file, endpoint) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        fetch(`/${endpoint}`, {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.blob())
+          .then((blob) => {
+            const url = URL.createObjectURL(blob);
+            imagePreview.src = url;
+            imagePreview.style.display = "block";
+          });
+      }
+
+      function predict() {
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        formData.append("action", "predict");
+
+        fetch("/upload", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.blob())
+          .then((blob) => {
+            const url = URL.createObjectURL(blob);
+            imagePreview.src = url;
+          });
+      }
+
+      function reset() {
+        imagePreview.style.display = "none";
+        imagePreview.src = "";
+        fileInput.value = "";
+        predictBtn.disabled = true;
+        fetch("/reset", { method: "POST" });
+      }
+    </script>
+  </body>
+</html>
